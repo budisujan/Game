@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fighting Game Mobile UI</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #
+              0;
+            overflow: hidden;
+            touch-action: none;
+            font-family: sans-serif;
+        }
+
+        #invisible-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999999;
+            background-color: #121212;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* layar game */
+        .game-wrapper {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            border: 5px solid #333;
+            background: #56BFBF;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        /* kontrol */
+        .ui-controller-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        /* Analog / Joystick */
+        .analog-base {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #myCanvascontrol {
+            border-radius: 50%;
+           
+        }
+
+        /* tombl*/
+        .action-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .btn-kick { border-color: #4facfe; }
+        .btn-punch { border-color: #ff416c; }
+
+    </style>
+</head>
+<body>
+
+<div id="invisible-overlay">
+    <div class="game-wrapper">
+        <canvas id="myCanvas" width="300" height="200"></canvas>
+    </div>
+
+    <div class="ui-controller-container">
+        <div class="analog-base">
+            <canvas id="myCanvascontrol" width="100" height="100"></canvas>
+        </div>
+
+        <div class="action-group">
+            <div class="btn-circle btn-kick">
+                <canvas id="myCanvaskick" width="80" height="80"></canvas>
+            </div>
+            <div class="btn-circle btn-punch">
+                <canvas id="myCanvaspunch" width="80" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var canvas = document.getElementById('myCanvas');
+var ctx = canvas.getContext('2d');
+var canvascontrol = document.getElementById('myCanvascontrol');
+var ctxctrl = canvascontrol.getContext('2d');
+var canvaskick = document.getElementById('myCanvaskick');
+var ctxk = canvaskick.getContext('2d');
+var canvaspunch = document.getElementById('myCanvaspunch');
+var ctxp = canvaspunch.getContext('2d');
+
+var kotakx = 50;
+var kotaky = 50;
+var karakterx = 50;
+var karaktery = -150;
+var enemyx = 250;
+var enemyy = -150;
+var lompat = false;
+var nyawa = 100;
+var nyawamusuh = 100;
+var nyentuh = false;
+var tukarpositi = false;
+let coldown = false;
+let pelurux = 99999999999;
+let peluruy = 99899999999;
+let selesai = false; 
+let gameSelesaiCount = 0; 
+let posisiXTerakhir = 0;
+let posisiYTerakhir = 0;
+let posisiEnemyXTerakhir = 0;
+let posisiEnemyYTerakhir = 0;
+// ui tombol
+function drawButtonText() {
+    ctxp.clearRect(0,0,100,100);
+    ctxp.fillStyle = "white";
+    ctxp.font = "bold 14px Arial";
+    ctxp.textAlign = "center";
+    ctxp.fillText("PUNCH", 40, 45);
+
+    ctxk.clearRect(0,0,100,100);
+    ctxk.fillStyle = "white";
+    ctxk.font = "bold 14px Arial";
+    ctxk.textAlign = "center";
+    ctxk.fillText("KICK", 40, 45);
+}
+drawButtonText();
+
+// aset sprite
+let gambar = new Image();
+let gambare = new Image();
+let gambarp = new Image();
+let ancang = false;
+let amin = "";
+let ab = new Image(), bc = new Image(), cd = new Image(), de = new Image(), ef = new Image(), fg = new Image();
+let ba = new Image(), cb = new Image(), dc = new Image(), ed = new Image(), fe = new Image(), gf = new Image(), ad = new Image(), da = new Image(), ce = new Image(), ec = new Image(); 
+let statisP = new Image();
+let statisE = new Image();
+let gamnnn = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjly9nH5P54H_cxbYDHiVCxsJghagcmKZr0gSdpI6Eep99sa3KT-x1TzWY3SP5IheZsdLdR38VK7g3fHRR3bKnO1OLeoyVermOgVUY2huWvbejfnpoGq5D7XtFipVymaw75FWKa5KiswieD4ZQN6BznYBzU_u4N5_Jd36rpmhnvWqp6dxZx-iN_xhyphenhyphengWxU/s320/Tak%20berjudul101_20260413024916.png";
+ 
+let gamfnn = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgBUHXevpuNC2FokwuQjsZyM2niV_VY4zNV8ekJwcDAC1-jhSDZHlxW2sJkmIzZ0CrL2B-UQCL_EF68oGvrMHTWxtDLV3mZ_j9ndGNE_rn-hqEMWBIZA7I6dP81nOJLB6KGWY-eqySPBp976tkO458k_OCjy_23-y4Isq1h7b7LSuK34SNCke-nonO81MU/s320/Tak%20berjudul101_20260413025003.png";
+let gampel = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgXDMZnAo-lK2dJ295lBW4WZj-9Rb4Q6hCteOh654ZzPjagkIOCmSuYFmu7j91QIufkBC6Ju3HPhzZ7M3DlRvqLSuUU1mu3VFR1NJykMfNbuPikUwyILgeeUPHyzWst8Se1XvhQb9QBpDyg2FRoK57zDlOpKE541oijiVQMopNCr4ivjLluHq6S5Aky_m4/s1280/Tak%20berjudul109_Dipulihkan4_20260413074400.png";
+let gamntt = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjj83iHFfXPkvrMk8EnEIvup8CIMahn2egBEqMiSyeeV3YwWcPoFJ-lKio3rzLtlxCvDSJToZ92UVdEHP4WLkxxQceBdJSlJ3GfcheYlKm-qmBGHhBjevI19pm42RzqbkR8Reta87xMkpSRW2qYJDIxaq4ofy8B4JXg8AMCFndgGzw7w_2HDC_XfvhGQSc/s320/Tak%20berjudul101_20260413024954.png";
+let gamnnt = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0p__IYkW80u3ft1mjHcLl-7Ek_w6RAsRUZxBbQd4Zspvpn7FHGwQpxTczTToEve6XPYp5GSHr3Og4eMWZUut1PQ9s_f9TPHTbluhWNgi1V4-whYlXk1DujqXqIWhkhUI9mnIQeSp8vFwlE-f4hLyMRz75cNg18PU2vZBbkP-wpX1SlKM_qEHEWWMdfRI/s320/Tak%20berjudul101_20260413024949.png";
+let gamntp = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgGnokM75zKupP1aUyml0yCkE3_pWW-_xSeUSVDIz4yFhl8dHzqfSDNi5yhaS7ue-0TSNliXYqIlHYMXLR175T18N_ID5RYguw0WKvAGDibnNgkNiLfsKabRQLAsxx7FBNwrgS4RpVsROhye9yrCgSHF4zXuXdXPkvXeGASJEiZ2OVEvAVfhZE5OShQzoI/s320/Tak%20berjudul101_20260413024938.png";
+let gamnnp = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiCEBzdpkh6A7M_U6hhpeOrqoGq6cI7lCMJwh6JbEQzFB8ymkoCT_N62GvMBD7-NUDrDuOzWxuoz-r_9710LsiadqGY4dvRGxuLgEDgWt3Ly85tW0tSM8hQ-jWgK5suJAoPc72LZ-2X9s_sYkS7zYdmlqlwAMuHIsg3rb2KDduhmibphYZ2lkZdjygj1kg/s320/Tak%20berjudul101_20260413024931.png";
+let gamntn = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgq5I7DiV8NM1uRATnsQe1Q80pFRPQPyehmSglqjoj6smVo5xvufCht2OsU9jK9XUSPDy-OqIGveT-OkBE-8tppKCo-C_Gzwjur1U8giVf4WGypo6vZc8ZXdyDrvSsucoqvmlA39mn6q3DgZE0D1kwwuW2VLFY1_O5WpKgP52FrzBvvjDwwpvClSloSTk0/s320/Tak%20berjudul101_20260413024922.pngg";
+let gamftn = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjbRz521NdRBSSrnpYfX-hybllqtCRWNSP8usZjHIsCENgKliK1S0hmi0UCQZDSDJh1oQtTYFnwgGEI0zBuPjfiUPNBhcYLad8oCXn53AsnxmXHkCJghf5vLb76bW0wGinWBddtj11pj9C7PwHbHcdTap1GA5lrqu7uUlDjxFV7b2Z9p9mGWd4x-UnofiU/s320/Tak%20berjudul101_20260413025014.png";
+let gamftp = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjrs10k9tEvPggiHgAs2BbWt7yCkPG9Keg9UuEq2j-qom0gJOoV2XtW9Fb8JCbLjhe7gdCdhB1-J6xpwOb85V1YN6xiuo1lU4MOUBJ-zOcj7L3Ks1Ji4qLd9uuNjPY_TLCDhXaeFV-GnwwutLV1ZqDdRacDJUVRZjAKlzCrNdMKNHkezG7kUJFafZ-GT6A/s320/Tak%20berjudul101_20260413025058.png";
+let gamfnp = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgn7Ez67Rr0VMYzi9ZnvJio18jBcWrtpehpUuMzCvQPf9EvfX5QXtIgJfpl0DSBcT8gC68pDwYiycO4c_lBgGas9jiBfKfa9Q1JZ9t05KjvH3MxX7NvRaeaNRHvTNHPj1P7NrsG0HWxbnOsOlM9OWhlcyyIEEw6Xqne8C1wSn4K6-q2eVoAaUnD3zj5U4M/s320/Tak%20berjudul101_20260413025021.png";
+let gamftt = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhAUHK-8UBLddEWYnV1GvYJf0RIHQj_IG-fK7oXxHKPsupLqC5kqbZuoENe1RbSWo-YhFCuNpg0NNJG951a2SqLBpEe1vO22k114C9omCf8qy1xJaGW3TwRNi2WWEwVWuDHlGRWZdjQjFNbeVWDvTYih94zPs2NI0U-cWPfUhxSAwthG9PxzwncBQfmLgM/s320/Tak%20berjudul101_20260413025111.png";
+let gamfnt = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjwinDoyNTTVN752DE7SFYbhg2f3qvBst2wU0a3thYbPL0Ag42mf6vtAAuGdC6RNFf2aOeEWcNg4iIZ_J01AHTUoRif4u9HEzgQWI93HoB8XRwO1VKtdV9Osp4feuva2YsrCT0ywUi8xDEFzWxdlOTuyteWEngzeeaGWNxJ14sjMHl4_lySIuiTwM-5l-w/s320/Tak%20berjudul101_20260413025105.png";
+  
+let gamnwin = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg7n8n8BoNDWx1jggdgea6VwhkNW2-iGoKNyPmyU5OYoE5_YKTp_p1BuVdPCa2_F8MoLtNwVp6XgXIzlehIL4WkfcwJ8SBOLXB2pNTGDf6LELAtZ1Wu6M9lEYl7BhNFgj1OtN7E7iXMQsp9UdCoAclARyuweISwFivQGJ_1-ctckxYA4x7abx1joaMj91Y/s320/Tak%20berjudul101_20260413110212.png";
+let gamfwin  = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgT5JC0dqN6p1tNrIBip4SZOFGR7buTnEx0d3NekTRph5kzUzLPB8rnSVupvo9c_Pb5mSGhA81_q0epkMG8iT8yODq_LEmPJ7OSm__rKdIuFyxDLyZMkiEw567CXtPA5TKlzADJ80lsxn91eaTAK-JyhXR3pWFVZSzOIq6r3ByXL4sQ0Zx-jOwjV4DieDg/s320/Tak%20berjudul101_20260413110217.png";
+let gamnlose = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEipRHCBYk3QIa8veYQ5sBZlZddyNfuPaWLMivxs3ga8Fwv4Y0mx6oyh81O-kjNuy98n6UwFXLU-xMDTsqLq30u7Qm-ChxDfnmCJoY58EnYzE-4i3atM-8yx8nQtuHU0tN6fN9clhm_eCdksbit5LFqf_hjLRUuFsDZrczAdyruMJFg7EuU2tv7Z3Un87dM/s320/Tak%20berjudul101_20260413110228.png";
+let gamflose  = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgqqnNohScbqYVlSD4XFaTe9K0btxusBxaJMp0Q9BZOd9WhFG2zPm4QmUUZDWmEhI4EYoYGViNECpQF5Fw9M0WmUuu2VffgwBYO2I8GQH9ZDFv2jlk1_pkUU0puyJ4IG9zMDEmqJS2Mz3WjWDeARMhPkdWn6vkTTI5B8sg3OsH-7EKs9MzPNF_bBrbZgB8/s320/Tak%20berjudul101_20260413110232.png";
+
+ab.src = gamnnn; bc.src = gamntn; cd.src = gamnnt; de.src = gamntt; ef.src = gamnnp; fg.src = gamntp;
+ba.src = gamfnn; cb.src = gamftn; dc.src = gamfnt; ed.src = gamftt; fe.src = gamfnp; gf.src = gamftp;
+ad.src = gamnwin; ce.src = gamfwin;
+da.src = gamnlose; ec.src = gamflose;
+gambar.src = gamnnn; gambare.src = gamfnn; gambarp.src = gampel;
+
+// tombol
+canvaskick.addEventListener('touchstart', function(event) {
+    if (coldown) {} else {
+        if (nyentuh) {
+            nyawamusuh-=10;
+            gambarsemua();
+            amin = "<<<BOOOMM!!>>>";
+            setTimeout(()=>{ amin = ""; },600);
+        }
+        ancang= true;
+        if (tukarpositi) { gambar.src= gamntt; } else { gambar.src = gamnnt; }
+        coldown = true;
+        setTimeout(()=>{ ancang = false; },500);
+        setTimeout(()=>{ coldown = false; },1000);
+    }
+});
+
+canvaspunch.addEventListener('touchstart', function(event) {
+    if (coldown) {} else {
+        if (nyentuh) {
+            nyawamusuh-=7;
+            gambarsemua();
+            amin = "<<<POWW!!>>";
+            setTimeout(()=>{ amin = ""; },600);
+        }
+        ancang= true;
+        if (tukarpositi) { gambar.src= gamntp; } else { gambar.src = gamnnp; }
+        setTimeout(()=>{ ancang = false; },500);
+        coldown = true;
+        setTimeout(()=>{ coldown = false; },1000);
+    }
+});
+
+canvascontrol.addEventListener('touchmove', function(event) {
+    var x = Math.floor((event.touches[0].pageX - canvascontrol.getBoundingClientRect().left)/80)*80;
+    var y = Math.floor((event.touches[0].pageY - canvascontrol.getBoundingClientRect().top)/80)*80+50;
+    const con = setInterval(()=> {
+        ctxctrl.clearRect(0, 0, canvascontrol.width, canvascontrol.height);
+        if (kotakx > x) { kotakx--; } else if (kotakx < x) { kotakx++; }
+        if (kotaky > y) { kotaky--; } else if (kotaky < y) { kotaky++; }
+        if (kotakx > 50) {
+            if (karakterx>290) {} else { karakterx++; }
+        } else if (kotakx < 50) {
+            if (karakterx<0) {} else { karakterx--; }
+        }
+        if (kotaky < 50) {
+            karaktery--;
+            setTimeout(()=>{ clearInterval(con); },30);
+        }
+        gambarsemua();
+    });  
+    setTimeout(() => { clearInterval(con); },100);
+});
+
+canvascontrol.addEventListener('touchend', function(event) {
+    setTimeout(()=>{
+        kotakx = 50; kotaky = 50;
+        gambarsemua();
+    },200);
+});
+
+const grav = setInterval(()=>{
+    if (karaktery>=190) {} else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        karaktery++;
+        gambarsemua();
+    }
+    if (enemyy>=190) {} else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        enemyy++;
+        gambarsemua();
+    }
+});
+
+function gambarsemua () {
+    ctxctrl.clearRect(0, 0, canvascontrol.width, canvascontrol.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Analog joystick
+    ctxctrl.fillStyle = "white";
+    ctxctrl.beginPath();
+    ctxctrl.arc(kotakx, kotaky, 15, 0, Math.PI*2);
+    ctxctrl.fill();
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(karakterx,karaktery,0,-70);
+    ctx.fillRect(enemyx,enemyy,0,-70);
+    
+    // Bar Nyawa
+    ctx.fillStyle = "green";
+    ctx.fillRect(0,0,nyawa,10);
+    ctx.fillStyle = "red";
+    ctx.fillRect(300,0,nyawamusuh*-1,10);
+    
+    ctx.drawImage(gambar,karakterx-20,karaktery, 60, -89);
+    ctx.drawImage(gambare,enemyx-20,enemyy, 60, -89);
+    ctx.drawImage(gambarp,pelurux-20,peluruy-10, 50, 50);
+
+    if (karakterx<enemyx){ tukarpositi=false; } else { tukarpositi =true; }
+
+    if (!ancang) {
+        if (tukarpositi) {
+            gambar.src = gamntn; gambare.src = gamftn;
+        } else {
+            gambar.src= gamnnn; gambare.src= gamfnn;
+        }
+    }
+
+    if (Math.abs(karakterx-enemyx)<=50) {
+        if (Math.round((karaktery-35)/100)*100 == Math.round((enemyy-35)/100)*100) {
+            if (tukarpositi) { enemyx--; karakterx++; }
+            else { enemyx++; karakterx--; }
+            nyentuh = true;
+        } else { nyentuh = false; }
+    } else { nyentuh = false; }
+}
+
+// Logika Serangan Musuh
+setInterval(()=>{
+  if (selesai)  return;
+    let macamserangan = (enemyx>270 || enemyx<0) ? 4 : Math.round(Math.random()*100);
+    if (macamserangan%3 == 0) {
+        ancang = true;
+        gambare.src = tukarpositi ? gamftp : gamfnp;
+        enemyy = karaktery; pelurux = enemyx; peluruy = enemyy-85;
+        gambarsemua();
+        const serangani = setInterval(()=>{
+            if (karakterx > enemyx) { pelurux+=3; } else if (karakterx < enemyx) { pelurux-=3; }
+            gambarsemua();
+            if (Math.abs(karakterx-pelurux)<=20) {
+                if (Math.round((karaktery-85)/100)*100 == Math.round(peluruy/100)*100) {
+                    nyawa-=15; clearInterval(serangani);
+                    peluruy = 999999999; pelurux = 999999999;
+                    gambarsemua();
+                }
+            }
+        });
+        setTimeout(()=>{ clearInterval(serangani); peluruy = 999999999; ancang = false; gambarsemua(); },2000);
+    } else {
+        ancang = true;
+        gambare.src = tukarpositi ? gamftt : gamfnt;
+        const serangan = setInterval(()=>{
+            if (karakterx > enemyx) { enemyx+=3; } else if (karakterx < enemyx) { enemyx-=3; }
+            if (karaktery > enemyy) { enemyy+=3; } else if (karaktery < enemyy) { enemyy-=3; }
+            gambarsemua();
+            if (nyentuh) { nyawa-=10; clearInterval(serangan); }
+            gambarsemua();
+        });
+        setTimeout(()=>{ clearInterval(serangan); gambarsemua(); ancang = false; },1500);
+    }
+},3000);
+
+const menangkalah = setInterval(() => {
+    ctx.fillStyle = "white";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(amin, canvas.width/2, 100);
+  if (nyawa <= 0) {
+            amin = "YOU LOSE";
+            nyawa = 0;
+   tampilkanPoseAkhir(gamnlose,gamfwin); 
+        } else if (nyawamusuh <= 0)  {
+            amin = "YOU WIN!";
+            nyawamusuh = 0;
+      tampilkanPoseAkhir(gamnwin, gamflose); 
+        }
+    if (selesai) {
+      drawStatis();
+        return;
+    } 
+
+    if (nyawa <= 0 || nyawamusuh <= 0) {
+        selesai = true; 
+        posisiXTerakhir = karakterx;
+        posisiYTerakhir = 190;
+        posisiEnemyXTerakhir = enemyx;
+        posisiEnemyYTerakhir = 190;
+        karakterx = -9999; enemyx = 9999;
+        pelurux = 9999; peluruy = 9999;
+
+        
+        setTimeout(() => {
+            resetGame();
+        }, 3000);
+    }
+});
+  function tampilkanPoseAkhir(imgP, imgE) {
+    statisP.src = imgP;
+    statisE.src = imgE;
+}
+
+function drawStatis() {
+    if (statisP.complete) {
+        ctx.drawImage(statisP, posisiXTerakhir - 20, posisiYTerakhir, 60, -89);
+    }
+    if (statisE.complete) {
+        ctx.drawImage(statisE, posisiEnemyXTerakhir - 20, posisiEnemyYTerakhir, 60, -89);
+    }
+}
+  function resetGame() {
+   
+    nyawa = 100;
+    nyawamusuh = 100;
+    karakterx = 50;
+    karaktery = 50;
+    enemyx = 250;
+    enemyy = 50;
+    selesai = false;
+    amin = "";
+    gambar.src = gamnnn;
+    gambare.src = gamfnn;
+    gambarsemua();
+}
+</script>
+</body>
+</html>
